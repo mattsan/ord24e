@@ -3,6 +3,11 @@ defmodule ExOrde24Test do
 
   import ExOrde24
 
+  setup_all do
+    ExOrde24.Memo.start_link()
+    :ok
+  end
+
   test "0", do: assert solve("16,333") == "38e"
   test "1", do: assert solve("2,100") == "-"
   test "2", do: assert solve("2,1") == "1"

@@ -1,21 +1,52 @@
+defmodule ExOrde24.Memo do
+  def start_link(_ \\ []) do
+    Agent.start_link(fn -> Map.new() end, name: __MODULE__)
+  end
+
+  def size(min, max, n) when min > max or n > max, do: 0
+
+  def size(min, max, 1), do: max - min + 1
+
+  def size(min, max, n) do
+    case Agent.get(__MODULE__, fn state -> state[{min, max, n}] end) do
+      nil ->
+        result =
+          min..max - n + 1
+          |> Enum.map(fn i ->
+              size(i + 1, max, n - 1)
+            end)
+          |> Enum.sum()
+        Agent.get_and_update(__MODULE__, fn state -> {result, Map.put(state, {min, max, n}, result)} end)
+      value ->
+        value
+    end
+  end
+end
+
 defmodule ExOrde24 do
+  alias ExOrde24.Memo
+
   def solve(input) do
     [base, pos] = input |> String.split(",") |> Enum.map(&String.to_integer/1)
 
-    result =
-      base
-      |> gen()
-      |> Enum.at(pos - 1, "-")
-      |> String.downcase()
+    find_pos = fn n, pos ->
+      size = Memo.size(1, base - 1, n)
+      cond do
+        size < pos ->
+          {:cont, pos - size}
+        true ->
+          {:halt, {pos, n}}
+      end
+    end
 
-    IO.puts "\n#{input} => #{result}"
-
-    result
-  end
-
-  def gen(base) do
-    1..base-1
-    |> Enum.flat_map(&gen(&1, 1, base - 1, base))
+    case Enum.reduce_while(1..base - 1, pos, find_pos) do
+      {pos, length} ->
+        gen(length, 1, base - 1, base)
+        |> Enum.at(pos - 1, "-")
+        |> String.downcase()
+      _ ->
+        "-"
+    end
   end
 
   def gen(1, min, max, base) do
