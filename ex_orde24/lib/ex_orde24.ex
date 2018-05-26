@@ -1,34 +1,38 @@
 defmodule ExOrde24 do
   def solve(input) do
-    [base, pos] = input |> String.split(",") |> Enum.map(&String.to_integer/1)
+    [base, pos] =
+      input
+      |> String.split(",")
+      |> Enum.map(&String.to_integer/1)
 
-    result =
-      base
-      |> gen()
-      |> Enum.at(pos - 1, "-")
-      |> String.downcase()
-
-    IO.puts "\n#{input} => #{result}"
-
-    result
+    case [0] |> Stream.unfold(&{&1, inc(&1, base)}) |> Enum.at(pos) do
+      nil ->
+        "-"
+      value ->
+        value
+        |> Enum.reverse()
+        |> Enum.map(& &1 |> Integer.to_string(base) |> String.downcase())
+        |> Enum.join()
+    end
   end
 
-  def gen(base) do
-    1..base-1
-    |> Enum.flat_map(&gen(&1, 1, base - 1, base))
+  def inc(nil, _), do: nil
+
+  def inc([1], 2), do: nil
+
+  def inc([n], base) when n + 1 == base, do: [2, 1]
+
+  def inc([d | ds], base) when d + 1 == base do
+    max_figure = base - 1
+    case inc(ds, base - 1) do
+      nil ->
+        nil
+      [^max_figure | _] ->
+        nil
+      [d | _] = value ->
+        [d + 1 | value]
+    end
   end
 
-  def gen(1, min, max, base) do
-    min..max |> Enum.map(&Integer.to_string(&1, base))
-  end
-
-  def gen(length, min, max, base) do
-    min .. (max + 1 - length)
-    |> Enum.flat_map(fn x ->
-        gen(length - 1, x + 1, max, base)
-        |> Enum.map(fn xs ->
-            Integer.to_string(x, base) <> xs
-          end)
-      end)
-  end
+  def inc([d | ds], _), do: [d + 1 | ds]
 end
