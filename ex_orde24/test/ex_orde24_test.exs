@@ -1,8 +1,7 @@
 defmodule ExOrde24Test do
   use ExUnit.Case
-  doctest ExOrde24
 
-  test "greets the world" do
-    assert ExOrde24.hello() == :world
-  end
+  import ExOrde24
+
+  test "0", do: assert solver("abc") == "abc"
 end
